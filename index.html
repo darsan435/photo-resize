@@ -1,0 +1,116 @@
+import tkinter as tk
+from tkinter import filedialog
+from PIL import Image
+import os
+import customtkinter as ctk
+
+class ImageConverterApp:
+    def __init__(self):
+        # App setup
+        self.app = ctk.CTk()
+        self.app.title("Image Converter Pro")
+        self.app.geometry("600x450")
+        ctk.set_appearance_mode("System")
+        ctk.set_default_color_theme("blue")
+
+        # Variables
+        self.file_path = ""
+        self.formats = ["PNG", "JPEG", "BMP", "WEBP", "TIFF"]
+        self.selected_format = ctk.StringVar(value="PNG")
+
+        # Create UI elements
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Main frame
+        main_frame = ctk.CTkFrame(self.app)
+        main_frame.pack(pady=20, padx=20, fill="both", expand=True)
+
+        # Title label
+        title_label = ctk.CTkLabel(main_frame, text="Image Converter", 
+                                 font=("Arial", 24, "bold"))
+        title_label.pack(pady=10)
+
+        # File selection button
+        self.file_button = ctk.CTkButton(main_frame, text="Select Image File", 
+                                       command=self.select_file)
+        self.file_button.pack(pady=10)
+
+        # Selected file label
+        self.file_label = ctk.CTkLabel(main_frame, text="No file selected", 
+                                      wraplength=400)
+        self.file_label.pack(pady=5)
+
+        # Format selection
+        format_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        format_frame.pack(pady=10)
+
+        format_label = ctk.CTkLabel(format_frame, text="Convert to:", 
+                                  font=("Arial", 12))
+        format_label.pack(side="left", padx=5)
+
+        self.format_menu = ctk.CTkOptionMenu(format_frame, 
+                                           variable=self.selected_format,
+                                           values=self.formats)
+        self.format_menu.pack(side="left", padx=5)
+
+        # Convert button
+        self.convert_button = ctk.CTkButton(main_frame, text="Convert Now", 
+                                          command=self.convert_image,
+                                          state="disabled")
+        self.convert_button.pack(pady=20)
+
+        # Status label
+        self.status_label = ctk.CTkLabel(main_frame, text="", 
+                                        text_color="#4CAF50")
+        self.status_label.pack()
+
+        # Progress bar
+        self.progress = ctk.CTkProgressBar(main_frame, mode="indeterminate")
+        self.progress.pack(pady=10, fill="x", padx=50)
+        self.progress.set(0)
+
+    def select_file(self):
+        file_types = (
+            ("Image files", "*.jpg *.jpeg *.png *.bmp *.webp *.tiff"),
+            ("All files", "*.*")
+        )
+        self.file_path = filedialog.askopenfilename(filetypes=file_types)
+        if self.file_path:
+            self.file_label.configure(text=self.file_path)
+            self.convert_button.configure(state="normal")
+
+    def convert_image(self):
+        if not self.file_path:
+            return
+
+        try:
+            self.progress.start()
+            self.status_label.configure(text="Converting...")
+
+            output_format = self.selected_format.get().lower()
+            img = Image.open(self.file_path)
+            base_path = os.path.splitext(self.file_path)[0]
+            output_path = f"{base_path}_converted.{output_format}"
+
+            # Handle JPEG save parameters
+            if output_format == "jpeg":
+                img.save(output_path, output_format, quality=95)
+            else:
+                img.save(output_path, output_format)
+
+            self.status_label.configure(text=f"Conversion successful!\nSaved to: {output_path}")
+            self.progress.stop()
+            self.progress.set(0)
+
+        except Exception as e:
+            self.status_label.configure(text=f"Error: {str(e)}", text_color="#f44336")
+            self.progress.stop()
+            self.progress.set(0)
+
+    def run(self):
+        self.app.mainloop()
+
+if __name__ == "__main__":
+    app = ImageConverterApp()
+    app.run()
